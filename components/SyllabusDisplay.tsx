@@ -95,6 +95,7 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [companionHtml, setCompanionHtml] = useState<string | null>(null);
+    const [isAdminMode, setIsAdminMode] = useState(false);
     
     const stripeUrl = "https://buy.stripe.com/4gM9AV5IP64q9tdaGa28800";
 
@@ -114,6 +115,10 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === 'true') {
+            setIsAdminMode(true);
+        }
+
         if (urlParams.get('companion_payment_success') === 'true') {
             const storedSyllabusJson = sessionStorage.getItem(SESSION_STORAGE_KEY_SYLLABUS);
             if (storedSyllabusJson) {
@@ -129,6 +134,10 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
 
     const handlePurchaseClick = () => {
         sessionStorage.setItem(SESSION_STORAGE_KEY_SYLLABUS, JSON.stringify(syllabus));
+    };
+
+    const handleAdminGenerate = () => {
+        handleGenerateCompanion(syllabus);
     };
 
     if (companionHtml) {
@@ -175,16 +184,32 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
             <p className="text-blue-800 mt-2 mb-4">
                 Obtenga un **Documento de Acompañamiento** completo, con un artículo original de ~1500 palabras desarrollado por la IA para cada una de las {syllabus.sesiones.length} sesiones.
             </p>
-            <a 
-              href={stripeUrl}
-              onClick={handlePurchaseClick}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M10 2a.75.75 0 0 1 .75.75v.518a3.74 3.74 0 0 1 4.232 4.232H15.5a.75.75 0 0 1 0 1.5h-.518a3.74 3.74 0 0 1-4.232 4.232v.518a.75.75 0 0 1-1.5 0v-.518A3.74 3.74 0 0 1 4.982 9.5H4.5a.75.75 0 0 1 0-1.5h.518A3.74 3.74 0 0 1 9.25 3.768V3.25A.75.75 0 0 1 10 2ZM8.5 7.5a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 1.5 0v-5Z" /><path d="M10 5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM10 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" /></svg>
-              Generar Documento de Acompañamiento - $9
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a 
+                href={stripeUrl}
+                onClick={handlePurchaseClick}
+                rel="noopener noreferrer"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M10 2a.75.75 0 0 1 .75.75v.518a3.74 3.74 0 0 1 4.232 4.232H15.5a.75.75 0 0 1 0 1.5h-.518a3.74 3.74 0 0 1-4.232 4.232v.518a.75.75 0 0 1-1.5 0v-.518A3.74 3.74 0 0 1 4.982 9.5H4.5a.75.75 0 0 1 0-1.5h.518A3.74 3.74 0 0 1 9.25 3.768V3.25A.75.75 0 0 1 10 2ZM8.5 7.5a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 1.5 0v-5Z" /><path d="M10 5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM10 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" /></svg>
+                Generar Documento de Acompañamiento - $9
+                </a>
+                {isAdminMode && (
+                    <button 
+                        onClick={handleAdminGenerate}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white text-sm font-medium rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M11.986 4.31a3.75 3.75 0 0 1 5.232 5.232l-1.373 1.373a.75.75 0 0 1-1.061-1.06l1.196-1.196a2.25 2.25 0 0 0-3.182-3.182l-1.927 1.927a.75.75 0 0 1-1.06-1.061l1.175-1.175ZM8.014 15.69a3.75 3.75 0 0 1-5.232-5.232l1.373-1.373a.75.75 0 0 1 1.061 1.06l-1.196 1.196a2.25 2.25 0 0 0 3.182 3.182l1.927-1.927a.75.75 0 1 1 1.06 1.061l-1.175 1.175Z" clipRule="evenodd" /><path d="m6.44 9.131.94-1.882a.75.75 0 1 1 1.342.67l-.94 1.882a.75.75 0 1 1-1.342-.67Zm3.939 3.938-.94 1.882a.75.75 0 1 1-1.342-.67l.94-1.882a.75.75 0 1 1 1.342.67Z" /></svg>
+                       Generar (Admin)
+                    </button>
+                )}
+            </div>
+             {isAdminMode && (
+                <p className="text-xs text-slate-500 mt-4">
+                    Modo de administrador activado. El botón "Generar (Admin)" eludirá el pago.
+                </p>
+            )}
         </div>
     );
 };
