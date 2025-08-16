@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { Syllabus, Session, Reading } from '../types';
 import ResultActions from './ResultActions';
 import { generateCompanionForSyllabus } from '../services/geminiService';
@@ -95,7 +96,7 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
     const [error, setError] = useState<string | null>(null);
     const [companionHtml, setCompanionHtml] = useState<string | null>(null);
     
-    const placeholderStripeUrl = "https://buy.stripe.com/URL_DE_TU_ENLACE_DE_PAGO_AQUI";
+    const stripeUrl = "https://buy.stripe.com/4gM9AV5IP64q9tdaGa28800";
 
     const handleGenerateCompanion = useCallback(async (syllabusToProcess: Syllabus) => {
         setIsGenerating(true);
@@ -126,15 +127,8 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
         }
     }, [handleGenerateCompanion]);
 
-    const handlePurchaseClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const handlePurchaseClick = () => {
         sessionStorage.setItem(SESSION_STORAGE_KEY_SYLLABUS, JSON.stringify(syllabus));
-        if (e.currentTarget.href.includes('https://buy.stripe.com/4gM9AV5IP64q9tdaGa28800')) {
-            e.preventDefault();
-            alert(
-                'Desarrollador: Por favor, configure su Enlace de Pago de Stripe.\n\n' +
-                'Reemplace la URL de marcador de posición en `components/SyllabusDisplay.tsx` con su URL de Stripe real para habilitar la funcionalidad de pago.'
-            );
-        }
     };
 
     if (companionHtml) {
@@ -154,14 +148,15 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
     }
 
     if (isGenerating) {
-        return (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                <div className="flex justify-center mb-4">
-                    <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        return createPortal(
+            <div className="fixed inset-0 bg-slate-100 bg-opacity-75 flex items-center justify-center z-50">
+                <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md text-center max-w-md mx-4">
+                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <h3 className="text-lg font-semibold text-slate-700">Generando su documento prémium...</h3>
+                    <p className="text-slate-500 mt-2">Este proceso puede tardar varios minutos, ya que la IA está redactando contenido original para cada sesión.</p>
                 </div>
-                <h3 className="text-lg font-semibold text-blue-800">Generando su documento prémium...</h3>
-                <p className="text-blue-700 mt-2">Este proceso puede tardar varios minutos, ya que la IA está redactando contenido original para cada sesión.</p>
-            </div>
+            </div>,
+            document.body
         );
     }
 
@@ -181,7 +176,7 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
                 Obtenga un **Documento de Acompañamiento** completo, con un artículo original de ~1500 palabras desarrollado por la IA para cada una de las {syllabus.sesiones.length} sesiones.
             </p>
             <a 
-              href={placeholderStripeUrl}
+              href={stripeUrl}
               onClick={handlePurchaseClick}
               rel="noopener noreferrer"
               target="_blank"
@@ -190,9 +185,6 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M10 2a.75.75 0 0 1 .75.75v.518a3.74 3.74 0 0 1 4.232 4.232H15.5a.75.75 0 0 1 0 1.5h-.518a3.74 3.74 0 0 1-4.232 4.232v.518a.75.75 0 0 1-1.5 0v-.518A3.74 3.74 0 0 1 4.982 9.5H4.5a.75.75 0 0 1 0-1.5h.518A3.74 3.74 0 0 1 9.25 3.768V3.25A.75.75 0 0 1 10 2ZM8.5 7.5a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 1.5 0v-5Z" /><path d="M10 5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM10 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" /></svg>
               Generar Documento de Acompañamiento - $9
             </a>
-            <div className="mt-4 text-xs text-slate-500">
-                <p><strong>Nota para el desarrollador:</strong> Configure un nuevo Enlace de Pago de Stripe para este producto de $9. En la configuración de Stripe, asegúrese de que la redirección tras el pago sea a `SU_URL?companion_payment_success=true`.</p>
-            </div>
         </div>
     );
 };
