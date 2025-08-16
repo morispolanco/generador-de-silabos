@@ -9,7 +9,9 @@ interface SyllabusFormProps {
 }
 
 const initialFormData: CourseInput = {
-  title: 'Seminario de Literatura Comparada',
+  title: 'Seminario de literatura comparada',
+  profesor: 'Dra. Ana Reyes',
+  universidad: 'Universidad Nacional Autónoma',
   sessions: 12,
   sessionDuration: 90,
   midtermExams: [
@@ -83,18 +85,28 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-xl font-semibold text-slate-700">{hasResult ? 'Ajustar Parámetros' : 'Crear Nuevo Sílabo'}</h2>
+      <h2 className="text-xl font-semibold text-slate-700">{hasResult ? 'Ajustar parámetros' : 'Crear nuevo sílabo'}</h2>
       
       {/* Basic Info */}
       <fieldset className="space-y-4">
-        <legend className="text-lg font-medium text-slate-600 border-b pb-2 mb-2">Información Básica</legend>
+        <legend className="text-lg font-medium text-slate-600 border-b pb-2 mb-2">Información básica</legend>
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-slate-700">Título del Curso</label>
+          <label htmlFor="title" className="block text-sm font-medium text-slate-700">Título del curso</label>
           <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label htmlFor="profesor" className="block text-sm font-medium text-slate-700">Nombre del profesor/a</label>
+                <input type="text" id="profesor" name="profesor" value={formData.profesor} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+            </div>
+            <div>
+                <label htmlFor="universidad" className="block text-sm font-medium text-slate-700">Universidad</label>
+                <input type="text" id="universidad" name="universidad" value={formData.universidad} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+            </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="sessions" className="block text-sm font-medium text-slate-700">Nº de Sesiones</label>
+            <label htmlFor="sessions" className="block text-sm font-medium text-slate-700">N.º de sesiones</label>
             <input type="number" id="sessions" name="sessions" value={formData.sessions} onChange={handleChange} required min="1" max="60" className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
           </div>
           <div>
@@ -118,17 +130,17 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
         ))}
         <button type="button" onClick={addMidterm} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-            Añadir Parcial
+            Añadir parcial
         </button>
 
         <div className="flex items-center gap-2">
-          <label htmlFor="finalPercentage" className="flex-grow text-sm font-medium text-slate-700">Examen/Trabajo Final (%)</label>
+          <label htmlFor="finalPercentage" className="flex-grow text-sm font-medium text-slate-700">Examen/trabajo final (%)</label>
           <input id="finalPercentage" type="number" name="finalPercentage" value={formData.finalPercentage} onChange={handleChange} min="0" max="100" className="w-24 px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
            <div className="w-5 h-5"></div>
         </div>
         
         <div className={`p-3 rounded-md text-sm ${errors.percentage ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>
-          <strong>Total Asignado:</strong> {totalPercentage}%
+          <strong>Total asignado:</strong> {totalPercentage}%
           {remainingPercentage >= 0 && !errors.percentage && <span className="ml-4"><strong>Restante:</strong> {remainingPercentage}%</span>}
           {errors.percentage && <p>{errors.percentage}</p>}
         </div>
@@ -143,7 +155,7 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
       
       {/* Optional Info */}
       <fieldset className="space-y-4">
-        <legend className="text-lg font-medium text-slate-600 border-b pb-2 mb-2">Información Opcional</legend>
+        <legend className="text-lg font-medium text-slate-600 border-b pb-2 mb-2">Información opcional</legend>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="semester" className="block text-sm font-medium text-slate-700">Semestre</label>
@@ -157,7 +169,7 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
             </select>
           </div>
           <div>
-            <label htmlFor="weeklyHours" className="block text-sm font-medium text-slate-700">Carga Horaria Semanal</label>
+            <label htmlFor="weeklyHours" className="block text-sm font-medium text-slate-700">Carga horaria semanal</label>
             <input type="text" id="weeklyHours" name="weeklyHours" value={formData.weeklyHours} onChange={handleChange} placeholder="Ej: 3 teóricas, 2 prácticas" className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
           </div>
           <div>
@@ -170,7 +182,7 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
           </div>
         </div>
         <div>
-          <label htmlFor="competencies" className="block text-sm font-medium text-slate-700">Competencias del Curso</label>
+          <label htmlFor="competencies" className="block text-sm font-medium text-slate-700">Competencias del curso</label>
           <textarea id="competencies" name="competencies" value={formData.competencies} onChange={handleChange} rows={3} placeholder="Describa las principales competencias que desarrollarán los estudiantes. Separar por comas." className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
         </div>
       </fieldset>
@@ -178,11 +190,11 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
       <div className="pt-4 border-t">
         <div className="flex flex-col sm:flex-row gap-4">
             <button type="submit" disabled={disabled || Object.keys(errors).length > 0} className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed">
-            {disabled ? 'Generando...' : hasResult ? 'Volver a Generar' : 'Generar Sílabo'}
+            {disabled ? 'Generando...' : hasResult ? 'Volver a generar' : 'Generar sílabo'}
             </button>
             {hasResult && (
             <button type="button" onClick={onReset} className="w-full inline-flex justify-center items-center px-4 py-2 border border-slate-300 text-base font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Empezar de Nuevo
+                Empezar de nuevo
             </button>
             )}
         </div>

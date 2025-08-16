@@ -12,7 +12,9 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 const syllabusSchema = {
   type: Type.OBJECT,
   properties: {
-    titulo: { type: Type.STRING, description: "El título completo del curso." },
+    titulo: { type: Type.STRING, description: "El título completo del curso. Debe seguir las normas de capitalización del español (solo mayúscula en la primera palabra y nombres propios)." },
+    profesor: { type: Type.STRING, description: "El nombre completo del profesor o instructor a cargo del curso." },
+    universidad: { type: Type.STRING, description: "El nombre de la universidad o institución donde se imparte el curso." },
     descripcion: { type: Type.STRING, description: "Un párrafo breve que describa el curso, sus temas principales y su enfoque." },
     objetivos: { 
         type: Type.ARRAY, 
@@ -29,7 +31,7 @@ const syllabusSchema = {
         items: {
             type: Type.OBJECT,
             properties: {
-                tipo: { type: Type.STRING, description: "El tipo de evaluación (ej. 'Examen Parcial 1', 'Trabajo Final')." },
+                tipo: { type: Type.STRING, description: "El tipo de evaluación (ej. 'Examen parcial 1', 'Trabajo final')." },
                 porcentaje: { type: Type.INTEGER, description: "El peso porcentual de esta evaluación." }
             },
             required: ["tipo", "porcentaje"]
@@ -43,7 +45,7 @@ const syllabusSchema = {
         type: Type.OBJECT,
         properties: {
           numero: { type: Type.INTEGER, description: "El número de la sesión, comenzando en 1." },
-          titulo: { type: Type.STRING, description: "Un título temático y conciso para la sesión." },
+          titulo: { type: Type.STRING, description: "Un título temático y conciso para la sesión, siguiendo las normas de capitalización del español." },
           objetivos: {
             type: Type.ARRAY,
             items: { type: Type.STRING },
@@ -82,7 +84,7 @@ const syllabusSchema = {
       }
     }
   },
-  required: ["titulo", "descripcion", "objetivos", "competencias", "evaluacion", "sesiones"]
+  required: ["titulo", "profesor", "universidad", "descripcion", "objetivos", "competencias", "evaluacion", "sesiones"]
 };
 
 
@@ -134,9 +136,13 @@ const createSyllabusPrompt = (data: CourseInput): string => {
 
 4.  **IDIOMA:** Todo el contenido generado debe estar en español académico de alta calidad.
 
+5.  **CAPITALIZACIÓN EN ESPAÑOL:** Todos los títulos que generes (título del curso, títulos de las sesiones, etc.) deben seguir las normas de capitalización del español: solo la primera palabra y los nombres propios se escriben con mayúscula inicial. Por ejemplo: "Historia de la literatura medieval", no "Historia de la Literatura Medieval".
+
 **DATOS DEL CURSO PARA EL SÍLABO:**
 
 -   **Título:** ${data.title}
+-   **Profesor/a:** ${data.profesor}
+-   **Universidad:** ${data.universidad}
 -   **Número de Sesiones:** ${data.sessions}
 -   **Duración por Sesión:** ${data.sessionDuration} minutos
 -   **Nivel:** ${data.level}
@@ -192,11 +198,12 @@ const createCompanionPrompt = (syllabus: Syllabus): string => {
 1.  **FORMATO HTML ESTRICTO:** La totalidad de tu respuesta debe ser código HTML bien formado. No incluyas \`<!DOCTYPE html>\`, \`<html>\`, \`<head>\` o \`<body>\`. Comienza directamente con un \`<h1>\` para el título principal y sigue con la estructura. No uses Markdown.
 2.  **CONTENIDO PROFUNDO Y ORIGINAL:** Para cada sesión, debes escribir un artículo original y profundo de aproximadamente 1500 palabras. Este artículo debe desarrollar los objetivos y el tema de la sesión, proporcionando contexto, explicaciones detalladas, ejemplos relevantes y análisis crítico. No te limites a repetir los objetivos; expándelos en un texto académico coherente y rico.
 3.  **ESTRUCTURA DEL DOCUMENTO:**
-    *   El documento debe empezar con un \`<h1>\` que contenga el título del curso: "${syllabus.titulo} - Documento de Acompañamiento".
+    *   El documento debe empezar con un \`<h1>\` que contenga el título del curso: "${syllabus.titulo} - Documento de acompañamiento".
     *   A continuación, para CADA sesión del sílabo, debes seguir esta estructura:
         *   Un \`<h2>\` con el texto "Sesión \${numero}: \${titulo de la sesión}".
         *   Seguido del artículo de ~1500 palabras, utilizando etiquetas HTML semánticas como \`<p>\`, \`<h3>\` para subsecciones, \`<ul>\`, \`<ol>\`, \`<li>\`, \`<strong>\`, \`<em>\` y \`<blockquote>\` para citas.
-4.  **TONO Y LENGUAJE:** El lenguaje debe ser académico, claro y en español de España. La redacción debe ser atractiva y facilitar el aprendizaje.
+4.  **TONO Y LENGUAJE:** El lenguaje debe ser académico, claro y en español. La redacción debe ser atractiva y facilitar el aprendizaje.
+5.  **CAPITALIZACIÓN EN ESPAÑOL:** Los títulos y subtítulos (\`<h1>\`, \`<h2>\`, \`<h3>\`) deben seguir las reglas de capitalización del español: solo la primera palabra y los nombres propios llevan mayúscula inicial.
 
 **SÍLABO DE REFERENCIA (SOLO TÍTULOS Y OBJETIVOS DE SESIONES):**
 

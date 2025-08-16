@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { CourseInput, Syllabus } from './types';
 import SyllabusForm from './components/SyllabusForm';
@@ -45,7 +46,7 @@ const App: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">
             <span className="text-blue-600">Sílabo</span>Gen
           </h1>
-          <p className="text-sm text-slate-500 hidden md:block">Generador de Programas Universitarios con IA</p>
+          <p className="text-sm text-slate-500 hidden md:block">Generador de programas universitarios con IA</p>
         </div>
       </header>
 

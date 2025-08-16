@@ -1,4 +1,3 @@
-
 import JSZip from 'jszip';
 import type { Syllabus } from '../types';
 
@@ -10,9 +9,9 @@ function createHtmlContent(syllabus: Syllabus): string {
       <p class="text-sm">${reading.citaAPA}</p>
       <p class="text-xs text-slate-600 italic"><strong>Anotación:</strong> ${reading.anotacion}</p>
       <div class="flex items-center space-x-4 text-xs">
-        <a href="${reading.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Acceder al Recurso</a>
+        <a href="${reading.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Acceder al recurso</a>
         ${reading.doi ? `<span class="text-slate-500">DOI: ${reading.doi}</span>` : ''}
-        ${reading.paywall ? `<span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">Posible Paywall</span>` : ''}
+        ${reading.paywall ? `<span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">Posible paywall</span>` : ''}
       </div>
     </li>
   `).join('');
@@ -46,6 +45,14 @@ function createHtmlContent(syllabus: Syllabus): string {
         "@type": "Course",
         "name": "${syllabus.titulo}",
         "description": "${syllabus.descripcion}",
+        "provider": {
+            "@type": "Organization",
+            "name": "${syllabus.universidad}"
+        },
+        "instructor": {
+            "@type": "Person",
+            "name": "${syllabus.profesor}"
+        },
         "hasCourseInstance": {
           "@type": "CourseInstance",
           "courseMode": "online"
@@ -57,26 +64,30 @@ function createHtmlContent(syllabus: Syllabus): string {
       <div id="main-content" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
         <header class="border-b pb-6 mb-6">
           <h1 class="text-3xl font-bold text-slate-900">${syllabus.titulo}</h1>
-          <p class="mt-2 text-slate-600">${syllabus.descripcion}</p>
+           <div class="mt-3 text-slate-600">
+            <p><strong>Profesor/a:</strong> ${syllabus.profesor}</p>
+            <p><strong>Universidad:</strong> ${syllabus.universidad}</p>
+          </div>
+          <p class="mt-4 text-slate-600">${syllabus.descripcion}</p>
         </header>
 
-        <h2 class="text-xl font-semibold text-slate-800 border-b pb-2">Objetivos de Aprendizaje</h2>
+        <h2 class="text-xl font-semibold text-slate-800 border-b pb-2">Objetivos de aprendizaje</h2>
         <ul class="mt-4 list-disc list-inside space-y-2 text-slate-700">${syllabus.objetivos.map(o => `<li>${o}</li>`).join('')}</ul>
         
         <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Competencias</h2>
         <ul class="mt-4 list-disc list-inside space-y-2 text-slate-700">${syllabus.competencias.map(c => `<li>${c}</li>`).join('')}</ul>
         
-        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Sistema de Evaluación</h2>
+        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Sistema de evaluación</h2>
         <ul class="mt-4 space-y-2 text-slate-700">${syllabus.evaluacion.map(e => `<li class="flex justify-between"><span>${e.tipo}</span><span class="font-semibold">${e.porcentaje}%</span></li>`).join('')}<li class="flex justify-between border-t pt-2 font-bold"><span>TOTAL</span><span>100%</span></li></ul>
 
-        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Plan de Sesiones</h2>
+        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Plan de sesiones</h2>
         <div class="space-y-6 mt-4">
         ${syllabus.sesiones.map(session => `
           <div class="pt-4">
             <h3 class="text-lg font-semibold text-blue-800">Sesión ${session.numero}: ${session.titulo}</h3>
             <div class="mt-3 space-y-3">
               <div>
-                <h4 class="font-semibold text-slate-700 text-sm">Objetivos de la Sesión</h4>
+                <h4 class="font-semibold text-slate-700 text-sm">Objetivos de la sesión</h4>
                 <ul class="list-disc list-inside text-slate-600 text-sm mt-1 space-y-1">${session.objetivos.map(o => `<li>${o}</li>`).join('')}</ul>
               </div>
               <div>
@@ -90,7 +101,7 @@ function createHtmlContent(syllabus: Syllabus): string {
               </div>
               ${session.lecturas && session.lecturas.length > 0 ? `
               <div>
-                <h4 class="font-semibold text-slate-700 text-sm">Lecturas Asignadas</h4>
+                <h4 class="font-semibold text-slate-700 text-sm">Lecturas asignadas</h4>
                 <ul class="divide-y divide-slate-200 mt-1">${getReadingsHtml(session.lecturas)}</ul>
               </div>` : ''}
             </div>
@@ -98,7 +109,7 @@ function createHtmlContent(syllabus: Syllabus): string {
         `).join('')}
         </div>
         
-        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Bibliografía Completa</h2>
+        <h2 class="mt-8 text-xl font-semibold text-slate-800 border-b pb-2">Bibliografía completa</h2>
         <ul class="divide-y divide-slate-200 mt-4">${getReadingsHtml(allReadings)}</ul>
       </div>
     </body>
@@ -129,7 +140,7 @@ function createCsvContent(syllabus: Syllabus): string {
         const row = [
           session.numero,
           `"${session.titulo.replace(/"/g, '""')}"`,
-          'Lectura Obligatoria',
+          'Lectura obligatoria',
           `"${reading.citaAPA.replace(/"/g, '""')}"`,
           reading.url,
           reading.doi || '',
@@ -167,7 +178,10 @@ export function downloadCsv(syllabus: Syllabus) {
 
 function createReadmeContent(syllabus: Syllabus): string {
     return `
-# Sílabo del Curso: ${syllabus.titulo}
+# Sílabo del curso: ${syllabus.titulo}
+
+- **Universidad:** ${syllabus.universidad}
+- **Profesor/a:** ${syllabus.profesor}
 
 Este archivo ZIP contiene los materiales generados para el curso.
 
@@ -213,7 +227,7 @@ export function downloadCompanionHtml(htmlContent: string, syllabusTitle: string
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Documento de Acompañamiento: ${syllabusTitle}</title>
+      <title>Documento de acompañamiento: ${syllabusTitle}</title>
       <script src="https://cdn.tailwindcss.com"></script>
        <style>
         body {

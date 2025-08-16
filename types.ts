@@ -1,4 +1,3 @@
-
 export interface MidtermExam {
   id: number;
   percentage: number;
@@ -6,6 +5,8 @@ export interface MidtermExam {
 
 export interface CourseInput {
   title: string;
+  profesor: string;
+  universidad: string;
   sessions: number;
   sessionDuration: number;
   midtermExams: MidtermExam[];
@@ -50,6 +51,8 @@ export interface Evaluation {
 
 export interface Syllabus {
   titulo: string;
+  profesor: string;
+  universidad: string;
   descripcion: string;
   objetivos: string[];
   competencias: string[];
