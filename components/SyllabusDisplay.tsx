@@ -128,7 +128,7 @@ const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
 
     const handlePurchaseClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         sessionStorage.setItem(SESSION_STORAGE_KEY_SYLLABUS, JSON.stringify(syllabus));
-        if (e.currentTarget.href.includes('URL_DE_TU_ENLACE_DE_PAGO_AQUI')) {
+        if (e.currentTarget.href.includes('https://buy.stripe.com/4gM9AV5IP64q9tdaGa28800')) {
             e.preventDefault();
             alert(
                 'Desarrollador: Por favor, configure su Enlace de Pago de Stripe.\n\n' +
