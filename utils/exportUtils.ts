@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import type { Syllabus } from '../types';
 
 function createHtmlContent(syllabus: Syllabus): string {
-  const allReadings = syllabus.sesiones.flatMap(s => s.lecturas);
+  const allReadings = syllabus.sesiones.flatMap(s => s.lecturas || []);
 
   const getReadingsHtml = (readings: typeof allReadings) => readings.map(reading => `
     <li class="py-3">
@@ -204,4 +204,44 @@ export async function downloadZip(syllabus: Syllabus) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+export function downloadCompanionHtml(htmlContent: string, syllabusTitle: string) {
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Documento de Acompañamiento: ${syllabusTitle}</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+       <style>
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        #main-content h1 { font-size: 2.25rem; font-weight: bold; margin-bottom: 1rem; }
+        #main-content h2 { font-size: 1.875rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+        #main-content h3 { font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        #main-content p { margin-bottom: 1rem; line-height: 1.6; }
+        #main-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        #main-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
+        #main-content blockquote { border-left: 4px solid #cbd5e1; padding-left: 1rem; margin-left: 0; font-style: italic; color: #475569; }
+      </style>
+    </head>
+    <body class="bg-slate-100 p-4 sm:p-8">
+      <div id="main-content" class="max-w-4xl mx-auto bg-white p-8 sm:p-12 rounded-lg shadow-lg">
+        ${htmlContent}
+      </div>
+    </body>
+    </html>
+  `;
+  const blob = new Blob([fullHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `companion-${syllabusTitle.toLowerCase().replace(/\s+/g, '-')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

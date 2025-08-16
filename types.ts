@@ -40,7 +40,7 @@ export interface Session {
   titulo: string;
   objetivos: string[];
   actividades: Activity[];
-  lecturas: Reading[];
+  lecturas?: Reading[];
 }
 
 export interface Evaluation {

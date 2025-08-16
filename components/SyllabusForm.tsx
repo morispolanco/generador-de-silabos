@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { CourseInput, MidtermExam } from '../types';
 
@@ -7,8 +6,6 @@ interface SyllabusFormProps {
   disabled: boolean;
   onReset: () => void;
   hasResult: boolean;
-  isPremium: boolean;
-  remainingGenerations: number;
 }
 
 const initialFormData: CourseInput = {
@@ -29,7 +26,7 @@ const initialFormData: CourseInput = {
   competencies: 'Análisis crítico de textos literarios, argumentación escrita, investigación bibliográfica.',
 };
 
-const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset, hasResult, isPremium, remainingGenerations }) => {
+const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset, hasResult }) => {
   const [formData, setFormData] = useState<CourseInput>(initialFormData);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
@@ -178,13 +175,7 @@ const SyllabusForm: React.FC<SyllabusFormProps> = ({ onSubmit, disabled, onReset
         </div>
       </fieldset>
       
-      <div className="pt-4 border-t space-y-4">
-        {!isPremium && remainingGenerations > 0 && (
-          <div className="text-center text-sm text-slate-500">
-            {remainingGenerations > 1 && `Te quedan ${remainingGenerations} generaciones gratuitas.`}
-            {remainingGenerations === 1 && 'Esta es tu última generación gratuita.'}
-          </div>
-        )}
+      <div className="pt-4 border-t">
         <div className="flex flex-col sm:flex-row gap-4">
             <button type="submit" disabled={disabled || Object.keys(errors).length > 0} className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed">
             {disabled ? 'Generando...' : hasResult ? 'Volver a Generar' : 'Generar Sílabo'}

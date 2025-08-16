@@ -1,6 +1,5 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-import type { CourseInput, Syllabus } from '../types';
+import type { CourseInput, Syllabus, Session } from '../types';
 
 const API_KEY = process.env.API_KEY;
 
@@ -88,7 +87,7 @@ const syllabusSchema = {
 
 
 export const generateSyllabus = async (formData: CourseInput): Promise<Syllabus> => {
-    const prompt = createPrompt(formData);
+    const prompt = createSyllabusPrompt(formData);
 
     try {
         const response = await ai.models.generateContent({
@@ -111,13 +110,12 @@ export const generateSyllabus = async (formData: CourseInput): Promise<Syllabus>
         return parsedSyllabus;
 
     } catch (error) {
-        console.error("Error en la llamada a Gemini API:", error);
+        console.error("Error en la llamada a Gemini API para generar sílabo:", error);
         throw new Error("No se pudo generar el sílabo desde la API.");
     }
 };
 
-
-const createPrompt = (data: CourseInput): string => {
+const createSyllabusPrompt = (data: CourseInput): string => {
   let prompt = `Eres un experto en diseño curricular y pedagogía universitaria de nivel mundial, con un compromiso ético absoluto con el conocimiento abierto. Tu tarea es generar un programa de estudios (sílabo) impecable, riguroso y práctico en español para un profesor universitario. El fracaso no es una opción; la reputación del profesor depende de la calidad de tu trabajo.
 
 **REGLAS CRÍTICAS E INQUEBRANTABLES:**
@@ -159,4 +157,50 @@ const createPrompt = (data: CourseInput): string => {
 Genera el sílabo completo siguiendo estas directrices con la máxima precisión y rigor.`;
 
   return prompt;
+};
+
+export const generateCompanionForSyllabus = async (syllabus: Syllabus): Promise<string> => {
+    const prompt = createCompanionPrompt(syllabus);
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                temperature: 0.8,
+            },
+        });
+        
+        // El resultado es directamente el texto HTML
+        return response.text.trim();
+    } catch (error) {
+        console.error("Error en la llamada a Gemini API para generar el companion:", error);
+        throw new Error("No se pudo generar el documento de acompañamiento desde la API.");
+    }
+};
+
+const createCompanionPrompt = (syllabus: Syllabus): string => {
+  const sessionDataForPrompt = syllabus.sesiones.map(s => ({
+    numero: s.numero,
+    titulo: s.titulo,
+    objetivos: s.objetivos
+  }));
+
+  return `Eres un catedrático experto y un escritor académico excepcional. Tu tarea es redactar un "Documento de Acompañamiento" para el curso "${syllabus.titulo}". Este documento consistirá en una serie de artículos de desarrollo, uno por cada sesión del sílabo. El resultado final debe ser un ÚNICO bloque de código HTML.
+
+**REGLAS FUNDAMENTALES:**
+
+1.  **FORMATO HTML ESTRICTO:** La totalidad de tu respuesta debe ser código HTML bien formado. No incluyas \`<!DOCTYPE html>\`, \`<html>\`, \`<head>\` o \`<body>\`. Comienza directamente con un \`<h1>\` para el título principal y sigue con la estructura. No uses Markdown.
+2.  **CONTENIDO PROFUNDO Y ORIGINAL:** Para cada sesión, debes escribir un artículo original y profundo de aproximadamente 1500 palabras. Este artículo debe desarrollar los objetivos y el tema de la sesión, proporcionando contexto, explicaciones detalladas, ejemplos relevantes y análisis crítico. No te limites a repetir los objetivos; expándelos en un texto académico coherente y rico.
+3.  **ESTRUCTURA DEL DOCUMENTO:**
+    *   El documento debe empezar con un \`<h1>\` que contenga el título del curso: "${syllabus.titulo} - Documento de Acompañamiento".
+    *   A continuación, para CADA sesión del sílabo, debes seguir esta estructura:
+        *   Un \`<h2>\` con el texto "Sesión \${numero}: \${titulo de la sesión}".
+        *   Seguido del artículo de ~1500 palabras, utilizando etiquetas HTML semánticas como \`<p>\`, \`<h3>\` para subsecciones, \`<ul>\`, \`<ol>\`, \`<li>\`, \`<strong>\`, \`<em>\` y \`<blockquote>\` para citas.
+4.  **TONO Y LENGUAJE:** El lenguaje debe ser académico, claro y en español de España. La redacción debe ser atractiva y facilitar el aprendizaje.
+
+**SÍLABO DE REFERENCIA (SOLO TÍTULOS Y OBJETIVOS DE SESIONES):**
+
+${JSON.stringify(sessionDataForPrompt, null, 2)}
+
+Ahora, genera el contenido HTML completo para el Documento de Acompañamiento.`;
 };

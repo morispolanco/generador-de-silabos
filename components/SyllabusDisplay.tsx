@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Syllabus, Session, Reading } from '../types';
 import ResultActions from './ResultActions';
+import { generateCompanionForSyllabus } from '../services/geminiService';
+import { downloadCompanionHtml } from '../utils/exportUtils';
+
+const SESSION_STORAGE_KEY_SYLLABUS = 'syllabusForCompanionPurchase';
 
 const ReadingCard: React.FC<{ reading: Reading }> = ({ reading }) => {
   const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(reading.citaAPA)}`;
@@ -35,7 +39,6 @@ const ReadingCard: React.FC<{ reading: Reading }> = ({ reading }) => {
     </li>
   );
 };
-
 
 const SessionCard: React.FC<{ session: Session }> = ({ session }) => (
   <div id={`session-${session.numero}`} className="pt-6 scroll-mt-20">
@@ -87,9 +90,126 @@ const SessionCard: React.FC<{ session: Session }> = ({ session }) => (
   </div>
 );
 
+const CompanionGenerator: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [companionHtml, setCompanionHtml] = useState<string | null>(null);
+    
+    const placeholderStripeUrl = "https://buy.stripe.com/URL_DE_TU_ENLACE_DE_PAGO_AQUI";
+
+    const handleGenerateCompanion = useCallback(async (syllabusToProcess: Syllabus) => {
+        setIsGenerating(true);
+        setError(null);
+        try {
+            const htmlContent = await generateCompanionForSyllabus(syllabusToProcess);
+            setCompanionHtml(htmlContent);
+        } catch (err) {
+            setError('Hubo un error al generar el documento. Por favor, inténtelo de nuevo.');
+            console.error(err);
+        } finally {
+            setIsGenerating(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('companion_payment_success') === 'true') {
+            const storedSyllabusJson = sessionStorage.getItem(SESSION_STORAGE_KEY_SYLLABUS);
+            if (storedSyllabusJson) {
+                const syllabusToProcess: Syllabus = JSON.parse(storedSyllabusJson);
+                handleGenerateCompanion(syllabusToProcess);
+                sessionStorage.removeItem(SESSION_STORAGE_KEY_SYLLABUS);
+                window.history.replaceState(null, '', window.location.pathname);
+            } else {
+                setError("No se encontró la información del sílabo para generar el documento. Por favor, vuelva a intentarlo desde la página del sílabo.");
+            }
+        }
+    }, [handleGenerateCompanion]);
+
+    const handlePurchaseClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        sessionStorage.setItem(SESSION_STORAGE_KEY_SYLLABUS, JSON.stringify(syllabus));
+        if (e.currentTarget.href.includes('URL_DE_TU_ENLACE_DE_PAGO_AQUI')) {
+            e.preventDefault();
+            alert(
+                'Desarrollador: Por favor, configure su Enlace de Pago de Stripe.\n\n' +
+                'Reemplace la URL de marcador de posición en `components/SyllabusDisplay.tsx` con su URL de Stripe real para habilitar la funcionalidad de pago.'
+            );
+        }
+    };
+
+    if (companionHtml) {
+        return (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                <h3 className="text-xl font-bold text-green-800">¡Documento de Acompañamiento Generado!</h3>
+                <p className="text-green-700 mt-2 mb-4">Su material de estudio personalizado está listo para descargar.</p>
+                <button
+                    onClick={() => downloadCompanionHtml(companionHtml, syllabus.titulo)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white text-base font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    Descargar Documento
+                </button>
+            </div>
+        );
+    }
+
+    if (isGenerating) {
+        return (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+                <div className="flex justify-center mb-4">
+                    <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <h3 className="text-lg font-semibold text-blue-800">Generando su documento prémium...</h3>
+                <p className="text-blue-700 mt-2">Este proceso puede tardar varios minutos, ya que la IA está redactando contenido original para cada sesión.</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                <p className="font-bold">Error</p>
+                <p>{error}</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-6 text-center">
+            <h3 className="text-xl font-bold text-blue-900">✨ Desbloquee el Material de Estudio Prémium</h3>
+            <p className="text-blue-800 mt-2 mb-4">
+                Obtenga un **Documento de Acompañamiento** completo, con un artículo original de ~1500 palabras desarrollado por la IA para cada una de las {syllabus.sesiones.length} sesiones.
+            </p>
+            <a 
+              href={placeholderStripeUrl}
+              onClick={handlePurchaseClick}
+              rel="noopener noreferrer"
+              target="_blank"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M10 2a.75.75 0 0 1 .75.75v.518a3.74 3.74 0 0 1 4.232 4.232H15.5a.75.75 0 0 1 0 1.5h-.518a3.74 3.74 0 0 1-4.232 4.232v.518a.75.75 0 0 1-1.5 0v-.518A3.74 3.74 0 0 1 4.982 9.5H4.5a.75.75 0 0 1 0-1.5h.518A3.74 3.74 0 0 1 9.25 3.768V3.25A.75.75 0 0 1 10 2ZM8.5 7.5a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 1.5 0v-5Z" /><path d="M10 5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM10 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" /></svg>
+              Generar Documento de Acompañamiento - $9
+            </a>
+            <div className="mt-4 text-xs text-slate-500">
+                <p><strong>Nota para el desarrollador:</strong> Configure un nuevo Enlace de Pago de Stripe para este producto de $9. En la configuración de Stripe, asegúrese de que la redirección tras el pago sea a `SU_URL?companion_payment_success=true`.</p>
+            </div>
+        </div>
+    );
+};
 
 const SyllabusDisplay: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
-  const allReadings = syllabus.sesiones.flatMap(s => s.lecturas);
+  const allReadings = syllabus.sesiones.flatMap(s => s.lecturas || []);
+
+  const handleNavClick = (event: React.MouseEvent<HTMLButtonElement>, targetId: string) => {
+    event.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+  };
 
   return (
     <article className="bg-white p-6 sm:p-8 rounded-lg shadow-md">
@@ -104,11 +224,12 @@ const SyllabusDisplay: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
             <div className="sticky top-24">
               <h3 className="text-lg font-semibold text-slate-800 mb-3">Contenido del Curso</h3>
               <ul className="space-y-2 text-sm">
-                  <li><a href="#objetivos" className="text-slate-600 hover:text-blue-600 hover:underline">Objetivos</a></li>
-                  <li><a href="#competencias" className="text-slate-600 hover:text-blue-600 hover:underline">Competencias</a></li>
-                  <li><a href="#evaluacion" className="text-slate-600 hover:text-blue-600 hover:underline">Evaluación</a></li>
-                  <li><a href="#calendario" className="text-slate-600 hover:text-blue-600 hover:underline">Calendario de Sesiones</a></li>
-                  <li><a href="#bibliografia" className="text-slate-600 hover:text-blue-600 hover:underline">Bibliografía Completa</a></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'objetivos')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline">Objetivos</button></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'competencias')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline">Competencias</button></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'evaluacion')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline">Evaluación</button></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'companion')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline font-bold">Material Prémium</button></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'calendario')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline">Calendario de Sesiones</button></li>
+                  <li><button onClick={(e) => handleNavClick(e, 'bibliografia')} className="text-left w-full text-slate-600 hover:text-blue-600 hover:underline">Bibliografía Completa</button></li>
               </ul>
             </div>
         </aside>
@@ -142,6 +263,10 @@ const SyllabusDisplay: React.FC<{ syllabus: Syllabus }> = ({ syllabus }) => {
                   <span>100%</span>
                 </li>
             </ul>
+          </section>
+          
+          <section id="companion" className="mt-8 scroll-mt-20">
+             <CompanionGenerator syllabus={syllabus} />
           </section>
 
           <section id="calendario" className="mt-8 scroll-mt-20">
