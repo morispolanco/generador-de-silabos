@@ -59,3 +59,18 @@ export interface Syllabus {
   evaluacion: Evaluation[];
   sesiones: Session[];
 }
+
+export interface MultipleChoiceQuestion {
+  pregunta: string;
+  opciones: string[];
+  respuestaCorrecta: number; // 0-indexed
+}
+
+export interface EssayQuestion {
+  pregunta: string;
+}
+
+export interface FinalExam {
+  preguntasOpcionMultiple: MultipleChoiceQuestion[];
+  preguntasDeEnsayo: EssayQuestion[];
+}

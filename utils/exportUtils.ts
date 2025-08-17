@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Syllabus } from '../types';
+import type { Syllabus, FinalExam } from '../types';
 
 function createHtmlContent(syllabus: Syllabus): string {
   const allReadings = syllabus.sesiones.flatMap(s => s.lecturas || []);
@@ -254,6 +254,101 @@ export function downloadCompanionHtml(htmlContent: string, syllabusTitle: string
   const a = document.createElement('a');
   a.href = url;
   a.download = `companion-${syllabusTitle.toLowerCase().replace(/\s+/g, '-')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function createExamHtmlContent(exam: FinalExam, syllabusTitle: string): string {
+  const multipleChoiceHtml = exam.preguntasOpcionMultiple.map((q, index) => `
+    <li class="mb-6">
+      <p class="font-semibold">${index + 1}. ${q.pregunta}</p>
+      <ol type="a" class="list-[lower-alpha] list-inside mt-2 space-y-1">
+        ${q.opciones.map(opcion => `<li>${opcion}</li>`).join('')}
+      </ol>
+    </li>
+  `).join('');
+
+  const essayHtml = exam.preguntasDeEnsayo.map((q, index) => `
+    <li class="mb-4">
+      <p class="font-semibold">${index + 1}. ${q.pregunta}</p>
+      <div class="h-32 border-b-2 border-dashed mt-4"></div>
+    </li>
+  `).join('');
+
+  const answerKeyHtml = exam.preguntasOpcionMultiple.map((q, index) => `
+    <li>${index + 1}. ${String.fromCharCode(97 + q.respuestaCorrecta).toUpperCase()}</li>
+  `).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Examen Final: ${syllabusTitle}</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <style>
+        @media print {
+          .no-print { display: none !important; }
+          body { font-size: 11pt; }
+        }
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+      </style>
+    </head>
+    <body class="bg-slate-100 p-4 sm:p-8">
+      <div class="max-w-4xl mx-auto bg-white p-8 sm:p-12 rounded-lg shadow-lg">
+        <header class="text-center border-b pb-6 mb-8">
+          <h1 class="text-3xl font-bold text-slate-900">Examen Final</h1>
+          <h2 class="text-xl text-slate-700 mt-2">${syllabusTitle}</h2>
+          <div class="mt-6 text-left space-y-2">
+            <p><strong>Nombre:</strong> __________________________________________________</p>
+            <p><strong>Fecha:</strong> _________________________</p>
+          </div>
+        </header>
+
+        <section>
+          <h3 class="text-2xl font-semibold text-slate-800 border-b pb-2 mb-6">Parte I: Opción Múltiple</h3>
+          <ol class="space-y-4">
+            ${multipleChoiceHtml}
+          </ol>
+        </section>
+
+        <section class="mt-12">
+          <h3 class="text-2xl font-semibold text-slate-800 border-b pb-2 mb-6">Parte II: Preguntas de Ensayo</h3>
+          <ol class="space-y-8">
+            ${essayHtml}
+          </ol>
+        </section>
+        
+        <div class="no-print mt-16 pt-8 border-t-4 border-double">
+          <h3 class="text-2xl font-bold text-center text-red-700">CLAVE DE RESPUESTAS (SOLO PARA EL PROFESOR)</h3>
+          <div class="mt-6 p-4 bg-slate-50 rounded">
+            <h4 class="font-semibold text-lg">Respuestas de Opción Múltiple</h4>
+            <ol class="grid grid-cols-5 gap-2 mt-2">
+              ${answerKeyHtml}
+            </ol>
+            <h4 class="font-semibold text-lg mt-6">Preguntas de Ensayo</h4>
+            <p class="text-sm text-slate-600 mt-1">La evaluación de las preguntas de ensayo se basa en la claridad, coherencia, uso de evidencia del curso y profundidad del análisis.</p>
+          </div>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function downloadExamHtml(exam: FinalExam, syllabusTitle: string) {
+  const htmlContent = createExamHtmlContent(exam, syllabusTitle);
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `examen-final-${syllabusTitle.toLowerCase().replace(/\s+/g, '-')}.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

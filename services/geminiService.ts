@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { CourseInput, Syllabus, Session } from '../types';
+import type { CourseInput, Syllabus, FinalExam } from '../types';
 
 const API_KEY = process.env.API_KEY;
 
@@ -210,4 +210,84 @@ const createCompanionPrompt = (syllabus: Syllabus): string => {
 ${JSON.stringify(sessionDataForPrompt, null, 2)}
 
 Ahora, genera el contenido HTML completo para el Documento de Acompañamiento.`;
+};
+
+const examSchema = {
+  type: Type.OBJECT,
+  properties: {
+    preguntasOpcionMultiple: {
+      type: Type.ARRAY,
+      description: "Una lista de al menos 20 preguntas de opción múltiple.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          pregunta: { type: Type.STRING, description: "El enunciado de la pregunta." },
+          opciones: { 
+            type: Type.ARRAY, 
+            description: "Un array de exactamente 4 strings con las posibles respuestas.",
+            items: { type: Type.STRING }
+          },
+          respuestaCorrecta: { type: Type.INTEGER, description: "El índice (0-3) de la respuesta correcta en el array de opciones." }
+        },
+        required: ["pregunta", "opciones", "respuestaCorrecta"]
+      }
+    },
+    preguntasDeEnsayo: {
+      type: Type.ARRAY,
+      description: "Una lista de exactamente 5 preguntas de desarrollo o ensayo.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          pregunta: { type: Type.STRING, description: "El enunciado de la pregunta de ensayo." }
+        },
+        required: ["pregunta"]
+      }
+    }
+  },
+  required: ["preguntasOpcionMultiple", "preguntasDeEnsayo"]
+};
+
+export const generateFinalExam = async (syllabus: Syllabus): Promise<FinalExam> => {
+    const prompt = createExamPrompt(syllabus);
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: examSchema,
+                temperature: 0.5,
+            },
+        });
+        
+        const jsonText = response.text.trim();
+        const parsedExam: FinalExam = JSON.parse(jsonText);
+        
+        return parsedExam;
+
+    } catch (error) {
+        console.error("Error en la llamada a Gemini API para generar examen:", error);
+        throw new Error("No se pudo generar el examen desde la API.");
+    }
+};
+
+const createExamPrompt = (syllabus: Syllabus): string => {
+  const sessionTopics = syllabus.sesiones.map(s => ` - Sesión ${s.numero}: ${s.titulo}`).join('\n');
+
+  return `Eres un profesor universitario experto en evaluación educativa. Tu tarea es crear un examen final riguroso y omnicomprensivo para el curso "${syllabus.titulo}".
+
+**REGLAS CRÍTICAS:**
+1.  **COBERTURA TOTAL:** El examen DEBE cubrir de manera equitativa los temas de TODAS las sesiones del curso listadas a continuación. No te centres solo en algunas sesiones.
+2.  **FORMATO JSON ESTRICTO:** La respuesta debe ser un objeto JSON válido que se ajuste perfectamente al \`responseSchema\` proporcionado. No incluyas ningún texto fuera del JSON.
+3.  **ESTRUCTURA DEL EXAMEN:**
+    *   Genera **al menos 20 preguntas de opción múltiple**. Cada pregunta debe tener 4 opciones de respuesta plausibles pero solo una correcta.
+    *   Genera **exactamente 5 preguntas de ensayo/desarrollo**. Estas preguntas deben requerir que el estudiante sintetice información, compare conceptos o aplique el conocimiento de manera crítica, basándose en el contenido del curso.
+4.  **CALIDAD ACADÉMICA:** Las preguntas deben ser claras, precisas y adecuadas para un nivel universitario. Evita ambigüedades.
+5.  **IDIOMA:** Todo el contenido debe estar en español.
+
+**TEMARIO DEL CURSO (BASADO EN LAS SESIONES):**
+${sessionTopics}
+
+Ahora, genera el examen final completo en formato JSON.`;
 };
